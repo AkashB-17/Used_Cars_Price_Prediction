@@ -9,7 +9,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from utils import clean_numeric_column
+from src.utils import clean_numeric_column
+from src.config import RAW_DATA_PATH, PROCESSED_DATA_PATH
 
 
 # ============================================================
@@ -17,9 +18,6 @@ from utils import clean_numeric_column
 # ============================================================
 
 CURRENT_YEAR = datetime.now().year
-
-RAW_DATA_PATH = Path("data/raw/used_cars_data.csv")
-PROCESSED_DATA_PATH = Path("data/processed/cleaned_data.csv")
 
 NUMERIC_COLUMNS = [
     "Mileage",
@@ -146,9 +144,6 @@ def extract_brand(df: pd.DataFrame) -> pd.DataFrame:
 # ============================================================
 # Numeric Cleaning
 # ============================================================
-
-from src.utils import clean_numeric_column
-
 
 def clean_numeric_columns(df: pd.DataFrame) -> pd.DataFrame:
     """

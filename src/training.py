@@ -36,7 +36,7 @@ from xgboost import XGBRegressor
 
 from catboost import CatBoostRegressor
 
-from config import (
+from src.config import (
     PROCESSED_DATA_PATH,
     MODEL_PATH,
     METRICS_PATH,
@@ -45,7 +45,7 @@ from config import (
     TEST_SIZE,
 )
 
-from utils import (
+from src.utils import (
     setup_logger,
     save_json,
 )
@@ -235,10 +235,15 @@ def train_and_evaluate(
     X_test: pd.DataFrame,
     y_train: pd.Series,
     y_test: pd.Series,
+    y_raw_test: pd.Series,
     preprocessor: ColumnTransformer,
 ):
     """
     Train all models, evaluate them, and return the best pipeline.
+
+    Models are trained on the log-transformed target (y_train/y_test), but
+    metrics are computed on the actual price scale (y_raw_test, in Lakh INR)
+    since that's the unit that's meaningful to report and compare models on.
     """
 
     models = get_models()
@@ -265,20 +270,25 @@ def train_and_evaluate(
             y_train,
         )
 
-        predictions = pipeline.predict(X_test)
+        predictions_log = pipeline.predict(X_test)
+
+        # Invert the log1p transform to get predictions back on the actual
+        # Lakh-INR price scale before scoring — this is the fix for the bug
+        # where metrics were previously reported on the log scale.
+        predictions = np.expm1(predictions_log)
 
         r2 = r2_score(
-            y_test,
+            y_raw_test,
             predictions,
         )
 
         mae = mean_absolute_error(
-            y_test,
+            y_raw_test,
             predictions,
         )
 
         rmse = root_mean_squared_error(
-            y_test,
+            y_raw_test,
             predictions,
         )
 
@@ -358,8 +368,8 @@ def save_artifacts(
     metrics = {
         "Best Model": best_model_name,
         "R2": float(best_metrics["R2"]),
-        "MAE": float(best_metrics["MAE"]),
-        "RMSE": float(best_metrics["RMSE"]),
+        "MAE_lakh": float(best_metrics["MAE"]),
+        "RMSE_lakh": float(best_metrics["RMSE"]),
     }
 
     save_json(
@@ -396,6 +406,10 @@ def main():
         random_state=RANDOM_STATE,
     )
 
+    # y_test is log1p(Price); invert it to get the actual Lakh-INR price for
+    # scoring, since MAE/RMSE/R2 should be reported in real, human units.
+    y_raw_test = np.expm1(y_test)
+
     logger.info(f"Training Samples : {len(X_train)}")
     logger.info(f"Testing Samples  : {len(X_test)}")
 
@@ -411,6 +425,7 @@ def main():
         X_test,
         y_train,
         y_test,
+        y_raw_test,
         preprocessor,
     )
 
