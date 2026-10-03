@@ -62,58 +62,103 @@ def predict_car_price(
 
     price = predict_price(car_data)
 
-    return f"## ₹ {price:.2f} Lakh\n*Estimated resale value*"
+    return f"""
+    <div class="result-box">
+        <h2>₹ {price:.2f} Lakh</h2>
+        <p>Estimated resale value based on current market trends</p>
+    </div>
+    """
 
 
 # ============================================================
 # Gradio Interface
 # ============================================================
 
-THEME = gr.themes.Soft(primary_hue="blue", secondary_hue="slate")
+THEME = gr.themes.Default(
+    primary_hue="indigo",
+    secondary_hue="blue",
+    neutral_hue="slate",
+    font=[gr.themes.GoogleFont("Inter"), "ui-sans-serif", "system-ui", "sans-serif"],
+).set(
+    body_background_fill="*neutral_50",
+    block_background_fill="white",
+    block_border_width="0px",
+    block_shadow="*shadow_drop_lg",
+    button_primary_background_fill="*primary_600",
+    button_primary_background_fill_hover="*primary_700",
+    button_primary_text_color="white",
+)
 
-with gr.Blocks(theme=THEME, title="Used Cars Price Prediction") as demo:
-    gr.Markdown(
-        """
-        # 🚗 Used Cars Price Prediction
-        Predicts a fair resale price for a used car from its specs — a mini version of the
-        dynamic-pricing problem platforms like CARS24 solve at scale.
+css = """
+.gradio-container { max-width: 1100px !important; }
+.banner {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    color: white;
+    padding: 30px;
+    border-radius: 12px;
+    text-align: center;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+.banner h1 { margin: 0 0 10px 0; color: white; font-weight: 700; font-size: 28px; }
+.banner p { margin: 0; color: #94a3b8; font-size: 16px; }
+.result-box {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    padding: 30px;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    margin-top: 20px;
+}
+.result-box h2 { margin: 0; color: white; font-weight: 700; font-size: 36px; }
+.result-box p { margin: 10px 0 0 0; color: #d1fae5; font-size: 16px; }
+"""
 
-        Model: **Random Forest** · R² = 0.89 · MAE ≈ ₹1.49 Lakh (trained on ~6,000 listings)
-        """
-    )
+with gr.Blocks(theme=THEME, css=css, title="Used Cars Price Prediction") as demo:
+    gr.HTML('''
+        <div class="banner">
+            <h1>🚗 Used Cars Price Prediction</h1>
+            <p>Predicts a fair resale price for a used car from its specs — a mini version of the dynamic-pricing problem platforms solve at scale.</p>
+            <p style="font-size: 14px; margin-top: 10px; color: #64748b;">Model: <strong>Random Forest</strong> &middot; R² = 0.89 &middot; MAE &approx; ₹1.49 Lakh (trained on ~6,000 listings)</p>
+        </div>
+    ''')
 
     with gr.Row():
         with gr.Column(scale=1):
-            gr.Markdown("#### Location & Identity")
-            location = gr.Dropdown(choices=LOCATIONS, value="Mumbai", label="Location")
-            brand = gr.Dropdown(choices=BRANDS, value="Maruti", label="Brand")
-            year = gr.Slider(1998, CURRENT_YEAR, value=2018, step=1, label="Year of Manufacture")
+            with gr.Group():
+                gr.Markdown("### 📍 Location & Identity")
+                location = gr.Dropdown(choices=LOCATIONS, value="Mumbai", label="Location")
+                brand = gr.Dropdown(choices=BRANDS, value="Maruti", label="Brand")
+                year = gr.Slider(1998, CURRENT_YEAR, value=2018, step=1, label="Year of Manufacture")
 
-            gr.Markdown("#### Usage")
-            kilometers = gr.Number(value=42000, label="Kilometers Driven", precision=0)
-            owner_type = gr.Dropdown(
-                choices=["First", "Second", "Third", "Fourth & Above"],
-                value="First",
-                label="Owner Type",
-            )
+            with gr.Group():
+                gr.Markdown("### 🛣️ Usage")
+                kilometers = gr.Number(value=42000, label="Kilometers Driven", precision=0)
+                owner_type = gr.Dropdown(
+                    choices=["First", "Second", "Third", "Fourth & Above"],
+                    value="First",
+                    label="Owner Type",
+                )
 
         with gr.Column(scale=1):
-            gr.Markdown("#### Engine & Performance")
-            fuel_type = gr.Dropdown(
-                choices=["Petrol", "Diesel", "CNG", "LPG", "Electric"],
-                value="Diesel",
-                label="Fuel Type",
-            )
-            transmission = gr.Dropdown(
-                choices=["Manual", "Automatic"], value="Manual", label="Transmission"
-            )
-            mileage = gr.Number(value=21.4, label="Mileage (kmpl or km/kg)")
-            engine = gr.Number(value=1248, label="Engine (CC)")
-            power = gr.Number(value=88.5, label="Power (bhp)")
-            seats = gr.Slider(2, 10, value=5, step=1, label="Seats")
+            with gr.Group():
+                gr.Markdown("### ⚙️ Engine & Performance")
+                fuel_type = gr.Dropdown(
+                    choices=["Petrol", "Diesel", "CNG", "LPG", "Electric"],
+                    value="Diesel",
+                    label="Fuel Type",
+                )
+                transmission = gr.Dropdown(
+                    choices=["Manual", "Automatic"], value="Manual", label="Transmission"
+                )
+                mileage = gr.Number(value=21.4, label="Mileage (kmpl or km/kg)")
+                engine = gr.Number(value=1248, label="Engine (CC)")
+                power = gr.Number(value=88.5, label="Power (bhp)")
+                seats = gr.Slider(2, 10, value=5, step=1, label="Seats")
 
-    predict_btn = gr.Button("Predict Price", variant="primary", size="lg")
-    output = gr.Markdown()
+    predict_btn = gr.Button("Calculate Fair Price", variant="primary", size="lg")
+    output = gr.HTML()
 
     predict_btn.click(
         fn=predict_car_price,

@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 
+
 from src.inference import predict_price
 from src.schemas import CarFeatures, PredictionResponse
 
