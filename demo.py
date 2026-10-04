@@ -90,7 +90,7 @@ THEME = gr.themes.Default(
 )
 
 css = """
-.gradio-container { max-width: 1100px !important; }
+.gradio-container { max-width: 1400px !important; padding: 0 2rem !important; }
 .banner {
     background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
     color: white;
@@ -120,44 +120,46 @@ with gr.Blocks(theme=THEME, css=css, title="Used Cars Price Prediction") as demo
         <div class="banner">
             <h1>🚗 Used Cars Price Prediction</h1>
             <p>Predicts a fair resale price for a used car from its specs — a mini version of the dynamic-pricing problem platforms solve at scale.</p>
-            <p style="font-size: 14px; margin-top: 10px; color: #64748b;">Model: <strong>Random Forest</strong> &middot; R² = 0.89 &middot; MAE &approx; ₹1.49 Lakh (trained on ~6,000 listings)</p>
+            <p style="font-size: 14px; margin-top: 10px; color: #cbd5e1;">Model: <strong>Random Forest</strong> &middot; R² ≈ 0.89 &middot; MAE ≈ ₹1.49 Lakh (trained on ~6,000 listings)</p>
         </div>
     ''')
 
-    with gr.Row():
+    with gr.Row(equal_height=True):
         with gr.Column(scale=1):
             with gr.Group():
                 gr.Markdown("### 📍 Location & Identity")
                 location = gr.Dropdown(choices=LOCATIONS, value="Mumbai", label="Location")
                 brand = gr.Dropdown(choices=BRANDS, value="Maruti", label="Brand")
                 year = gr.Slider(1998, CURRENT_YEAR, value=2018, step=1, label="Year of Manufacture")
+                fuel_type = gr.Dropdown(
+                    choices=["Petrol", "Diesel", "CNG", "LPG", "Electric"],
+                    value="Diesel",
+                    label="Fuel Type",
+                )
 
+        with gr.Column(scale=1):
             with gr.Group():
-                gr.Markdown("### 🛣️ Usage")
+                gr.Markdown("### 🛣️ Usage & Ownership")
                 kilometers = gr.Number(value=42000, label="Kilometers Driven", precision=0)
                 owner_type = gr.Dropdown(
                     choices=["First", "Second", "Third", "Fourth & Above"],
                     value="First",
                     label="Owner Type",
                 )
+                transmission = gr.Dropdown(
+                    choices=["Manual", "Automatic"], value="Manual", label="Transmission"
+                )
+                seats = gr.Slider(2, 10, value=5, step=1, label="Seats")
 
         with gr.Column(scale=1):
             with gr.Group():
                 gr.Markdown("### ⚙️ Engine & Performance")
-                fuel_type = gr.Dropdown(
-                    choices=["Petrol", "Diesel", "CNG", "LPG", "Electric"],
-                    value="Diesel",
-                    label="Fuel Type",
-                )
-                transmission = gr.Dropdown(
-                    choices=["Manual", "Automatic"], value="Manual", label="Transmission"
-                )
-                mileage = gr.Number(value=21.4, label="Mileage (kmpl or km/kg)")
                 engine = gr.Number(value=1248, label="Engine (CC)")
                 power = gr.Number(value=88.5, label="Power (bhp)")
-                seats = gr.Slider(2, 10, value=5, step=1, label="Seats")
+                mileage = gr.Number(value=21.4, label="Mileage (kmpl or km/kg)")
+                seats_display = gr.Markdown("")
 
-    predict_btn = gr.Button("Calculate Fair Price", variant="primary", size="lg")
+    predict_btn = gr.Button("Predict Price", variant="primary", size="lg")
     output = gr.HTML()
 
     predict_btn.click(
